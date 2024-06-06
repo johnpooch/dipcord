@@ -10,11 +10,6 @@ type TransformedResponse = {
   token: string;
 };
 
-const USERNAME = 'username';
-const PASSWORD = 'password';
-
-const token = Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
-
 const transformResponse: TransformResponse<TransformedResponse> = (
   response,
 ) => {
@@ -22,11 +17,14 @@ const transformResponse: TransformResponse<TransformedResponse> = (
   return { token: Properties };
 };
 
-const login = async () => {
-  const response = await fetch(`${baseUrl}/Auth/DiscordBotLogin`, {
-    method: 'GET',
-    headers: { ...baseHeaders, Authorization: `Basic ${token}` },
-  });
+const getUserToken = async (userId: string, botToken: string) => {
+  const response = await fetch(
+    `${baseUrl}/Auth/${userId}/TokenForDiscordUser`,
+    {
+      method: 'GET',
+      headers: { ...baseHeaders, Authorization: `Bearer ${botToken}` },
+    },
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -37,4 +35,4 @@ const login = async () => {
   return transformResponse(await response.json());
 };
 
-export { login };
+export { getUserToken };

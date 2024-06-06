@@ -1,22 +1,19 @@
+import dotenv from 'dotenv';
+
 import { DIPLICITY_API_BASE_URL } from './constants';
 
-type RequestConfig = {
-  url: string;
-  method: string;
-  headers: { [key: string]: string };
+// Get the base URL from the environment variables if it exists, otherwise
+// use production URL
+const envConfig = dotenv.config();
+const envDiplictityApiBaseUrl = envConfig.parsed.DIPLICITY_API_BASE_URL;
+const baseUrl =
+  !envDiplictityApiBaseUrl || envDiplictityApiBaseUrl === ''
+    ? DIPLICITY_API_BASE_URL
+    : envDiplictityApiBaseUrl;
+
+const baseHeaders = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
 };
 
-const makeRequest = async (config: RequestConfig) => {
-  const response = await fetch(`${DIPLICITY_API_BASE_URL}${config.url}`, {
-    method: config.method,
-    headers: config.headers,
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return await response.json();
-};
-
-export { makeRequest, RequestConfig };
+export { baseUrl, baseHeaders };
