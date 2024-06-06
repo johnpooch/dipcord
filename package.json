@@ -1,14 +1,12 @@
 {
-  "name": "node-typescript-boilerplate",
+  "name": "dipcord",
   "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
-  "type": "module",
   "engines": {
     "node": ">= 20.9 < 21"
   },
   "devDependencies": {
     "@types/jest": "~29.5",
-    "@types/node": "~20",
+    "@types/node": "^20.14.2",
     "@typescript-eslint/eslint-plugin": "~7.6",
     "@typescript-eslint/parser": "~7.6",
     "eslint": "~8.56",
@@ -23,6 +21,8 @@
   },
   "scripts": {
     "start": "node build/src/main.js",
+    "deploy-commands-and-start": "npm run deploy-commands && npm run start",
+    "deploy-commands": "node build/src/deploy-commands.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",
     "build": "tsc -p tsconfig.json",
@@ -33,12 +33,11 @@
     "prettier": "prettier --config .prettierrc --write .",
     "test:watch": "jest --watch"
   },
-  "author": "Jakub Synowiec <jsynowiec@users.noreply.github.com>",
-  "license": "Apache-2.0",
   "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "express": "~4.16.1",
+    "http-errors": "^2.0.0",
     "tslib": "~2.6"
-  },
-  "volta": {
-    "node": "20.12.2"
   }
 }
