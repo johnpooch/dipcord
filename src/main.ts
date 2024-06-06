@@ -10,6 +10,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
+client.commands.set(commands.createGame.data.name, commands.createGame);
 
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
   console.log(interaction);

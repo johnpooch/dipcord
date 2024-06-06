@@ -14,15 +14,13 @@ const rest = new REST().setToken(envConfig.parsed.DISCORD_BOT_TOKEN);
   try {
     const commandsData = [];
 
-    console.log('Adding command to commandsData: ', commands.ping.data.name);
     commandsData.push(commands.ping.data.toJSON());
+    commandsData.push(commands.createGame.data.toJSON());
 
     // The put method is used to fully refresh all commands in the guild with the current set
-    const data = await rest.put(Routes.applicationCommands(APPLICATION_ID), {
+    await rest.put(Routes.applicationCommands(APPLICATION_ID), {
       body: commandsData,
     });
-
-    console.log('Successfully registered application commands: ', data);
   } catch (error) {
     // And of course, make sure you catch and log any errors!
     console.error(error);
