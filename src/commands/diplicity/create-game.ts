@@ -13,7 +13,7 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
     const { token: botToken } = await api.login();
     const { token: userToken } = await api.getUserToken(user.id, botToken);
     const game = await api.createGame(channelId, userToken);
-    console.log(game);
+    await interaction.reply(`Game created with ID: ${game.id}`);
   } catch (error) {
     // Respond to the user with the error message
     await interaction.reply(

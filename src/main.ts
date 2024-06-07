@@ -12,8 +12,6 @@ client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
 client.commands.set(commands.createGame.data.name, commands.createGame);
 
-console.log('Hello world test66');
-
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
   console.log(interaction);
 

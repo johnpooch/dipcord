@@ -10,14 +10,14 @@ type TransformedResponse = {
   token: string;
 };
 
-const USERNAME = process.env.DIPLICITY_BOT_USERNAME;
+const USERNAME = process.env.DISCORD_BOT_USERNAME;
 if (!USERNAME || USERNAME === '') {
-  throw new Error('DIPLICITY_BOT_USERNAME environment variable is required');
+  throw new Error('DISCORD_BOT_USERNAME environment variable is required');
 }
 
-const PASSWORD = process.env.DIPLICITY_BOT_PASSWORD;
+const PASSWORD = process.env.DISCORD_BOT_PASSWORD;
 if (!PASSWORD || PASSWORD === '') {
-  throw new Error('DIPLICITY_BOT_PASSWORD environment variable is required');
+  throw new Error('DISCORD_BOT_PASSWORD environment variable is required');
 }
 
 const token = Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
