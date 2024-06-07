@@ -11,16 +11,11 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
 client.commands.set(commands.createGame.data.name, commands.createGame);
+client.commands.set(commands.addMember.data.name, commands.addMember);
 
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
-  console.log(interaction);
-
-  console.log(interaction.isCommand());
-
   // check if the interaction is a command
   if (interaction.isCommand()) {
-    console.log('Command name: ', interaction.commandName);
-    console.log('commands: ', client.commands);
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
