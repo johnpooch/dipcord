@@ -12,6 +12,8 @@ client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
 client.commands.set(commands.createGame.data.name, commands.createGame);
 
+console.log('Hello world test66');
+
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
   console.log(interaction);
 
@@ -58,3 +60,17 @@ client.once(Events.ClientReady, (readyClient) => {
 
 // Log in to Discord with your client's token
 client.login(envConfig.parsed.DISCORD_BOT_TOKEN);
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received.');
+  // Perform cleanup tasks here
+
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received.');
+  // Perform cleanup tasks here
+
+  process.exit(0);
+});

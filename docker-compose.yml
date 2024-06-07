@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  dipcord-application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./build
+          target: /app/build
+    container_name: dipcord-application
+    entrypoint: ['npm', 'run', 'start']
+    volumes:
+      - .:/app
+    networks:
+      - diplicity-net
+    env_file:
+      - .env
+  dipcord-deploy-commands:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dipcord-deploy-commands
+    entrypoint: ['npm', 'run', 'deploy-commands']
+    volumes:
+      - .:/app
+    networks:
+      - diplicity-net
+    env_file:
+      - .env
+networks:
+  diplicity-net:
+    name: diplicity-net
+    driver: bridge
