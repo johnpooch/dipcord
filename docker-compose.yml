@@ -10,8 +10,10 @@ services:
           path: ./build
           target: /app/build
     container_name: dipcord-application
-    entrypoint: ['npm', 'run', 'start']
+    entrypoint: ['npm', 'run', 'start-dev']
+    restart: unless-stopped
     volumes:
+      - /app/node_modules
       - .:/app
     networks:
       - diplicity-net
@@ -24,6 +26,20 @@ services:
     container_name: dipcord-deploy-commands
     entrypoint: ['npm', 'run', 'deploy-commands']
     volumes:
+      - /app/node_modules
+      - .:/app
+    networks:
+      - diplicity-net
+    env_file:
+      - .env
+  dipcord-build-watch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dipcord-build-watch
+    entrypoint: ['npm', 'run', 'build:watch']
+    volumes:
+      - /app/node_modules
       - .:/app
     networks:
       - diplicity-net
