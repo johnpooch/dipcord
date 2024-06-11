@@ -7,7 +7,6 @@ import { createScopedLogger } from '../../util/telemetry';
 const listVariantsSuccessResponse = (
   variants: Awaited<ReturnType<typeof api.listVariants>>,
 ): string => {
-  // Truncate variant description after 100 characters
   const truncate = (description: string): string =>
     description.length > 100
       ? `${description.substring(0, 100)}...`
@@ -15,7 +14,7 @@ const listVariantsSuccessResponse = (
   return `# Variants\n${variants.map((variant) => `## ${variant.name}\n${truncate(variant.description)}\n**Created by:** ${variant.createdBy}\n**Starts:** ${variant.startSeason} ${variant.startYear}`).join('\n')}`;
 };
 
-const log = createScopedLogger('commands/game/add-member');
+const log = createScopedLogger('commands/game/list-variants');
 
 const data = new SlashCommandBuilder()
   .setName('list-variants')
