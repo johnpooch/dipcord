@@ -12,6 +12,7 @@ client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
 client.commands.set(commands.createGame.data.name, commands.createGame);
 client.commands.set(commands.addMember.data.name, commands.addMember);
+client.commands.set(commands.listVariants.data.name, commands.listVariants);
 
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
   // check if the interaction is a command
