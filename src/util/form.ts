@@ -30,6 +30,7 @@ type DiscordFormConfig<TFormValues> = {
   ) => Promise<void>;
   onCancel?: (interaction: ResponseInteraction) => void;
   timeout?: number;
+  submitLabel?: string;
 };
 
 const createDiscordForm = <TFormValues>(
@@ -73,7 +74,7 @@ const createDiscordForm = <TFormValues>(
             },
             {
               type: ComponentType.Button,
-              label: 'Submit',
+              label: config.submitLabel ?? 'Submit',
               style: ButtonStyle.Primary,
               customId: `submit-${JSON.stringify(values)}`,
             },

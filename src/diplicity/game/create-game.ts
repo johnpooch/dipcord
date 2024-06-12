@@ -27,12 +27,16 @@ const transformResponse: TransformResponse<TransformedResponse> = (
   };
 };
 
-const createGameData = (channelId: string) => ({
+const createGameData = (
+  channelId: string,
+  variant: string,
+  phaseLength: number,
+) => ({
   Id: channelId,
   Desc: channelId,
-  Variant: 'Classical',
-  PhaseLengthMinutes: 60 * 24,
-  NonMovementPhaseLengthMinutes: 60 * 24,
+  Variant: variant,
+  PhaseLengthMinutes: 60 * phaseLength,
+  NonMovementPhaseLengthMinutes: 60 * phaseLength,
   MaxHated: 0,
   MaxHater: 0,
   MinRating: 0,
@@ -52,8 +56,13 @@ const createGameData = (channelId: string) => ({
   GameMasterEnabled: false,
 });
 
-const createGame = async (channelId, userToken) => {
-  const data = createGameData(channelId);
+const createGame = async (
+  channelId,
+  userToken,
+  variant: string,
+  phaseLength: number,
+) => {
+  const data = createGameData(channelId, variant, phaseLength);
   const response = await fetch(`${baseUrl}/Game`, {
     method: 'POST',
     headers: { ...baseHeaders, Authorization: `Bearer ${userToken}` },

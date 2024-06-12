@@ -10,6 +10,7 @@ type DiplicityResponse = ListApiResponse<{
   Name: string;
   Description: string;
   CreatedBy: string;
+  Nations: string[];
   Start: {
     Year: number;
     Season: string;
@@ -20,6 +21,7 @@ type TransformedResponse = {
   name: string;
   description: string;
   createdBy: string;
+  nations: string[];
   startYear: number;
   startSeason: string;
 }[];
@@ -29,13 +31,16 @@ const transformResponse: TransformResponse<TransformedResponse> = (
 ) => {
   log.info(`Transforming response: ${JSON.stringify(response)}`);
   const data = extractPropertiesList(response as DiplicityResponse);
-  const transformed = data.map(({ Name, Description, CreatedBy, Start }) => ({
-    name: Name,
-    description: Description,
-    createdBy: CreatedBy,
-    startYear: Start.Year,
-    startSeason: Start.Season,
-  }));
+  const transformed = data.map(
+    ({ Name, Description, CreatedBy, Start, Nations }) => ({
+      name: Name,
+      description: Description,
+      createdBy: CreatedBy,
+      nations: Nations,
+      startYear: Start.Year,
+      startSeason: Start.Season,
+    }),
+  );
   log.info(`Transformed response: ${JSON.stringify(transformed)}`);
   return transformed;
 };

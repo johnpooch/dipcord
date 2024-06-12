@@ -1,6 +1,8 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 
+import * as ready from './events/ready';
+import * as interactionCreate from './events/interaction-create';
 import * as commands from './commands';
 
 const envConfig = dotenv.config();
@@ -51,6 +53,8 @@ client.commands.set(commands.listVariants.data.name, commands.listVariants);
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
+
+client.on(interactionCreate.name, interactionCreate.execute);
 
 // Log in to Discord with your client's token
 client.login(envConfig.parsed.DISCORD_BOT_TOKEN);
