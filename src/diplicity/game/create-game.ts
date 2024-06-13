@@ -1,4 +1,7 @@
+import { createScopedLogger } from '../../util';
 import { baseHeaders, baseUrl } from '../util/request';
+
+const log = createScopedLogger('diplicity/game/create-game');
 
 type TransformResponse<T> = (response: unknown) => T;
 
@@ -16,10 +19,22 @@ type TransformedResponse = {
   variant: string;
 };
 
+type CreateGameWehbooks = {
+  gameStarted: {
+    token: string;
+    id: string;
+  };
+  phaseStarted: {
+    token: string;
+    id: string;
+  };
+};
+
 const transformResponse: TransformResponse<TransformedResponse> = (
   response,
 ) => {
   const { Properties } = response as DiplicityResponse;
+  log.info(`Transforming response: ${JSON.stringify(Properties)}`);
   return {
     id: Properties.ID,
     variant: Properties.Variant,
@@ -31,6 +46,7 @@ const createGameData = (
   channelId: string,
   variant: string,
   phaseLength: number,
+  webhooks: CreateGameWehbooks,
 ) => ({
   Id: channelId,
   Desc: channelId,
@@ -54,6 +70,10 @@ const createGameData = (
   SkipMuster: false,
   ChatLanguageISO639_1: 'en',
   GameMasterEnabled: false,
+  GameStartedDiscordWebhookId: webhooks.gameStarted.id,
+  GameStartedDiscordWebhookToken: webhooks.gameStarted.token,
+  PhaseStartedDiscordWebhookId: webhooks.phaseStarted.id,
+  PhaseStartedDiscordWebhookToken: webhooks.phaseStarted.token,
 });
 
 const createGame = async (
@@ -61,8 +81,9 @@ const createGame = async (
   userToken,
   variant: string,
   phaseLength: number,
+  webhooks: CreateGameWehbooks,
 ) => {
-  const data = createGameData(channelId, variant, phaseLength);
+  const data = createGameData(channelId, variant, phaseLength, webhooks);
   const response = await fetch(`${baseUrl}/Game`, {
     method: 'POST',
     headers: { ...baseHeaders, Authorization: `Bearer ${userToken}` },

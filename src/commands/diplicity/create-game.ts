@@ -216,18 +216,91 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
           log.info(`Orders channel created for nation ${nation}`);
         });
 
+        log.info('Deleting all existing webhooks channels for server');
+        const existingWebhooksChannels =
+          interaction.guild.channels.cache.filter(
+            (channel) => channel.name === 'webhooks',
+          );
+
+        await Promise.all(
+          existingWebhooksChannels.map(async (channel) => {
+            log.info('Deleting existing webhooks channel for server');
+            await channel.delete();
+            log.info('Webhooks channel deleted for server');
+          }),
+        );
+
+        log.info('Creating private webhooks channel for server');
+        const webhooksChannel = await interaction.guild.channels.create({
+          name: 'webhooks',
+          type: ChannelType.GuildText,
+          permissionOverwrites: [
+            {
+              id: interaction.guild.roles.everyone.id,
+              deny: PermissionFlagsBits.ViewChannel,
+            },
+          ],
+        });
+        log.info('Private webhooks channel created for server');
+
+        // Ensure that there is no existing webhook for server with name "game-started"
+        log.info('Retrieving webhooks for server');
+        const existingWebhooks = await interaction.guild.fetchWebhooks();
+        log.info('Webhooks retrieved');
+
+        // Delete all existing webhooks
+        await Promise.all(
+          existingWebhooks.map(async (webhook) => {
+            log.info(`Deleting webhook ${webhook.name}`);
+            await webhook.delete();
+            log.info(`Webhook deleted ${webhook.name}`);
+          }),
+        );
+
+        log.info('Creating game-started webhook for webhooks channel');
+        const gameStartedWebhook = await webhooksChannel.createWebhook({
+          name: 'game-started',
+        });
+        log.info('Game-started webhook created for webhooks channel');
+
+        log.info('Creating phase-started webhook for webhooks channel');
+        const phaseStartedWebhook = await webhooksChannel.createWebhook({
+          name: 'phase-started',
+        });
+        log.info('Phase-started webhook created for webhooks channel');
+
         log.info('Creating game');
         await api.createGame(
           channelId,
           userToken,
           values.variant,
           Number(values.phaseLength),
+          {
+            gameStarted: {
+              id: gameStartedWebhook.id,
+              token: gameStartedWebhook.token,
+            },
+            phaseStarted: {
+              id: phaseStartedWebhook.id,
+              token: phaseStartedWebhook.token,
+            },
+          },
         );
         log.info('Game created');
 
+        log.info('Sending test webhook message for game-started');
+        await gameStartedWebhook.send('Initialization test message (ignore)');
+        log.info('Test webhook message sent for game-started');
+
+        log.info('Sending test webhook message for phase-started');
+        await phaseStartedWebhook.send('Initialization test message (ignore)');
+        log.info('Test webhook message sent for phase-started');
+
         log.info('Responding to user with game created message');
         await interaction.update({
-          content: submitResponseContent.replace('{{ variantName }}', values.variant).replace('{{ phaseLength }}', values.phaseLength),
+          content: submitResponseContent
+            .replace('{{ variantName }}', values.variant)
+            .replace('{{ phaseLength }}', values.phaseLength),
           components: [
             {
               type: ComponentType.ActionRow,

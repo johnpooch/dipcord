@@ -1,20 +1,31 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 
-import * as ready from './events/ready';
-import * as interactionCreate from './events/interaction-create';
+// import * as ready from './events/ready';
+// import * as interactionCreate from './events/interaction-create';
 import * as commands from './commands';
+import { webhookHandlers } from './webhooks';
 
 const envConfig = dotenv.config();
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+});
 
 client.commands = new Collection();
 client.commands.set(commands.ping.data.name, commands.ping);
 client.commands.set(commands.createGame.data.name, commands.createGame);
 client.commands.set(commands.addMember.data.name, commands.addMember);
 client.commands.set(commands.listVariants.data.name, commands.listVariants);
+
+(client as Client<true>).on(Events.MessageCreate, async (message) => {
+  if (message.webhookId) {
+    const webhook = await message.fetchWebhook();
+    if (webhookHandlers.gameStarted.name === webhook.name)
+      webhookHandlers.gameStarted.execute(webhook);
+  }
+});
 
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
   // check if the interaction is a command
@@ -54,7 +65,7 @@ client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
-client.on(interactionCreate.name, interactionCreate.execute);
+// client.on(interactionCreate.name, interactionCreate.execute);
 
 // Log in to Discord with your client's token
 client.login(envConfig.parsed.DISCORD_BOT_TOKEN);
