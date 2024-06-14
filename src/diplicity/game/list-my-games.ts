@@ -3,7 +3,7 @@ import { DiplicityMember, Member } from '../types';
 import { baseHeaders, baseUrl } from '../util/request';
 import { ListApiResponse, extractPropertiesList } from '../util/transform';
 
-const log = createScopedLogger('diplicity/game/list-games');
+const log = createScopedLogger('diplicity/game/list-my-games');
 
 type TransformResponse<T> = (response: unknown) => T;
 
@@ -41,10 +41,10 @@ const transformResponse: TransformResponse<TransformedResponse> = (
   return transformed;
 };
 
-const listGames = async (status: string, userToken: string) => {
-  log.info(`listGames invoked with status: ${status}`);
+const listMyGames = async (status: string, userToken: string) => {
+  log.info(`listMyGames invoked with status: ${status}`);
 
-  const response = await fetch(`${baseUrl}/Games/${status}`, {
+  const response = await fetch(`${baseUrl}/Games/My/${status}`, {
     method: 'GET',
     headers: { ...baseHeaders, Authorization: `Bearer ${userToken}` },
   });
@@ -62,4 +62,4 @@ const listGames = async (status: string, userToken: string) => {
   return transformResponse(await response.json());
 };
 
-export { listGames };
+export { listMyGames };

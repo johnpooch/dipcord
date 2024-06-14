@@ -7,21 +7,28 @@ import {
   InteractionReplyOptions,
   InteractionResponse,
   StringSelectMenuComponentData,
+  UserSelectMenuComponentData,
+  ButtonInteraction,
+  AnySelectMenuInteraction,
+  Message,
 } from 'discord.js';
+import { createScopedLogger } from './telemetry';
+
+const log = createScopedLogger('util/form');
 
 type ResponseInteraction = Awaited<
   ReturnType<InteractionResponse['awaitMessageComponent']>
 >;
 
 type DiscordFormField = {
-  type: 'select';
+  type: 'string-select' | 'user-select';
   name: string;
   placeholder: string;
   options?: { label: string; value: string }[];
 };
 
 type DiscordFormConfig<TFormValues> = {
-  initialValues: TFormValues;
+  initialValues?: TFormValues;
   interactionContent?: BaseMessageOptions['content'];
   fields: DiscordFormField[];
   onSubmit: (
@@ -30,13 +37,13 @@ type DiscordFormConfig<TFormValues> = {
   ) => Promise<void>;
   onCancel?: (interaction: ResponseInteraction) => void;
   timeout?: number;
+  submitLabel?: string;
 };
 
 const createDiscordForm = <TFormValues>(
   config: DiscordFormConfig<TFormValues>,
 ) => {
-  const render = (values: TFormValues): BaseMessageOptions => {
-    console.log('Values: ', values);
+  const render = (values: Partial<TFormValues>): BaseMessageOptions => {
     return {
       content: config.interactionContent,
       components: [
@@ -44,21 +51,28 @@ const createDiscordForm = <TFormValues>(
           return {
             type: ComponentType.ActionRow,
             components: [
-              {
-                type: ComponentType.StringSelect,
-                placeholder: field.placeholder,
-                customId: field.name,
-                options: field.options.map((option) => {
-                  return {
-                    ...option,
-                    value: JSON.stringify({
-                      ...values,
-                      [field.name]: option.value,
+              field.type === 'string-select'
+                ? ({
+                    type: ComponentType.StringSelect,
+                    placeholder: field.placeholder,
+                    customId: field.name,
+                    options: field.options.map((option) => {
+                      log.info(`Creating option: ${JSON.stringify(option)}`);
+                      return {
+                        ...option,
+                        value: JSON.stringify({
+                          ...values,
+                          [field.name]: option.value,
+                        }),
+                        default: values[field.name] === option.value,
+                      };
                     }),
-                    default: values[field.name] === option.value,
-                  };
-                }),
-              } as StringSelectMenuComponentData,
+                  } as StringSelectMenuComponentData)
+                : ({
+                    type: ComponentType.UserSelect,
+                    placeholder: field.placeholder,
+                    customId: field.name,
+                  } as UserSelectMenuComponentData),
             ],
           };
         }),
@@ -73,7 +87,7 @@ const createDiscordForm = <TFormValues>(
             },
             {
               type: ComponentType.Button,
-              label: 'Submit',
+              label: config.submitLabel ?? 'Submit',
               style: ButtonStyle.Primary,
               customId: `submit-${JSON.stringify(values)}`,
             },
@@ -85,23 +99,29 @@ const createDiscordForm = <TFormValues>(
 
   return {
     respond: async (
-      interaction: CommandInteraction<CacheType>,
+      interaction:
+        | CommandInteraction<CacheType>
+        | ButtonInteraction<CacheType>
+        | AnySelectMenuInteraction<CacheType>,
       options?: InteractionReplyOptions,
     ) => {
       const commandResponse = await interaction.reply({
-        ...render(config.initialValues),
+        ...render(config.initialValues ?? {}),
         ...options,
+        fetchReply: true,
       });
 
       const handleResponse = async (
-        response: InteractionResponse,
+        response: InteractionResponse | Message<boolean>,
       ): Promise<void> => {
         try {
           const responseInteraction = await response.awaitMessageComponent({
             time: 60_000,
           });
+          log.info(`Handling response: ${responseInteraction.customId}`);
           if (responseInteraction.isStringSelectMenu()) {
             const onChangeValues = JSON.parse(responseInteraction.values[0]);
+            log.info(`Values: ${JSON.stringify(onChangeValues)}`);
             const nextResponse = await responseInteraction.update(
               render(onChangeValues),
             );
@@ -118,7 +138,6 @@ const createDiscordForm = <TFormValues>(
             });
           }
         } catch (error) {
-          console.error(error);
           await interaction.editReply({
             content: 'Confirmation not received within 1 minute, cancelling',
             components: [],
