@@ -23,8 +23,8 @@ const data = new SlashCommandBuilder()
 const execute = async (interaction: CommandInteraction): Promise<void> => {
   log.info('Command invoked');
 
-  const { user, channelId } = interaction;
-  log.info(`user: ${user.id}, channelId: ${channelId}`);
+  const { user, guildId } = interaction;
+  log.info(`user: ${user.id}, guildId: ${guildId}`);
 
   try {
     const { token: botToken } = await api.login();

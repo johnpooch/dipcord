@@ -10,31 +10,7 @@ import {
 } from 'discord.js';
 import { createScopedLogger } from '../../util/telemetry';
 import { createDiscordForm } from '../../util/form';
-// import { DiscordFormConfig } from '../../util/form';
-
-const commandResponseContent = `
-## Create a new Diplomacy game
-
-You are about to create a new Diplomacy game in this server. This will authorize
-the bot to create new roles for each player, and create new channels in a
-category to manage the game.
-
-You will be able to add new players after the game has been initiated.
-
-Note that we are in alpha phase, meaning that there might be issues. If you
-have questions or feedback, please contact the developers at
-<https://discord.gg/Hc9dbJTz>.
-### Game settings:
-`;
-
-const submitResponseContent = `
-## Game created
-The game has been created. You can now add players.
-### Game details:
-- Variant: **{{ variantName }}**
-- Phase length: **{{ phaseLength }} hours**
-### Next steps:
-`;
+import * as content from './content';
 
 const log = createScopedLogger('commands/game/create-game');
 
@@ -53,10 +29,10 @@ const data = new SlashCommandBuilder()
   .setDescription('Creates a new game for the current server.');
 
 const execute = async (interaction: CommandInteraction): Promise<void> => {
-  const { user, channelId } = interaction;
+  const { user, guildId } = interaction;
 
   log.info(
-    `Command invoked: ${interaction.commandName}; user: ${user.id}; channelId: ${channelId}`,
+    `Command invoked: ${interaction.commandName}; user: ${user.id}; guildId: ${guildId}`,
   );
 
   try {
@@ -66,11 +42,11 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
     const { token: userToken } = await api.getUserToken(user.id, botToken);
     log.info('User token acquired');
 
-    const stagingGames = await api.listGames('Staging', userToken);
+    const stagingGames = await api.listMyGames('Staging', userToken);
     log.info('Staging games retrieved for user');
 
     const stagingGameForServer = stagingGames.find(
-      (game) => game.name === channelId,
+      (game) => game.name === guildId,
     );
 
     if (stagingGameForServer) {
@@ -83,11 +59,11 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
       return;
     }
 
-    const startedGames = await api.listGames('Started', userToken);
+    const startedGames = await api.listMyGames('Started', userToken);
     log.info('Started games retrieved for user.');
 
     const startedGameForServer = startedGames.find(
-      (game) => game.name === channelId,
+      (game) => game.name === guildId,
     );
 
     if (startedGameForServer) {
@@ -105,11 +81,11 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
 
     const createGameForm = createDiscordForm<FormData>({
       initialValues: defaultValues,
-      interactionContent: commandResponseContent,
+      interactionContent: content.createGameCommandResponse,
       submitLabel: 'Create game',
       fields: [
         {
-          type: 'select',
+          type: 'string-select',
           name: 'variant',
           placeholder: 'Variant',
           options: variants.map((variant) => ({
@@ -118,7 +94,7 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
           })),
         },
         {
-          type: 'select',
+          type: 'string-select',
           name: 'phaseLength',
           placeholder: 'Phase length',
           options: [
@@ -129,17 +105,7 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
         },
       ],
       onSubmit: async (interaction, values) => {
-        const { user, channelId } = interaction;
-        log.info(`user: ${user.id}, channelId: ${channelId}`);
-
-        const { token: botToken } = await api.login();
-        log.info('Bot token acquired');
-
-        const { token: userToken } = await api.getUserToken(user.id, botToken);
-        log.info('User token acquired');
-
-        const variants = await api.listVariants(userToken);
-        log.info('Variants retrieved');
+        await interaction.deferReply({ ephemeral: true });
 
         const variant = variants.find((v) => v.name === values.variant);
         if (!variant) {
@@ -271,7 +237,7 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
 
         log.info('Creating game');
         await api.createGame(
-          channelId,
+          guildId,
           userToken,
           values.variant,
           Number(values.phaseLength),
@@ -288,17 +254,9 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
         );
         log.info('Game created');
 
-        log.info('Sending test webhook message for game-started');
-        await gameStartedWebhook.send('Initialization test message (ignore)');
-        log.info('Test webhook message sent for game-started');
-
-        log.info('Sending test webhook message for phase-started');
-        await phaseStartedWebhook.send('Initialization test message (ignore)');
-        log.info('Test webhook message sent for phase-started');
-
         log.info('Responding to user with game created message');
-        await interaction.update({
-          content: submitResponseContent
+        await interaction.editReply({
+          content: content.createGameSuccessResponse
             .replace('{{ variantName }}', values.variant)
             .replace('{{ phaseLength }}', values.phaseLength),
           components: [

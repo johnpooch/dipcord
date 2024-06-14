@@ -24,8 +24,8 @@ const data = new SlashCommandBuilder()
 const execute = async (interaction: CommandInteraction): Promise<void> => {
   log.info('Command invoked');
 
-  const { user, channelId } = interaction;
-  log.info(`user: ${user.id}, channelId: ${channelId}`);
+  const { user, guildId } = interaction;
+  log.info(`user: ${user.id}, guildId: ${guildId}`);
 
   const { options } = interaction;
   const member = (options.resolved.members.first() as GuildMember).user;
@@ -41,12 +41,12 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
     const { token: memberToken } = await api.getUserToken(member.id, botToken);
     log.info('Member token acquired');
 
-    const games = await api.listGames('Staging', userToken);
+    const games = await api.listMyGames('Staging', userToken);
     log.info(`Games retrieved for user: ${games.length}`);
 
     log.info(JSON.stringify(games[0]));
 
-    games.filter((game) => game.name === channelId);
+    games.filter((game) => game.name === guildId);
 
     if (games.length === 0) {
       log.info('No pending game for this channel. Responding to user.');

@@ -34,6 +34,7 @@ const createMemberData = () => ({
 
 const addMember = async (gameId: string, memberToken: string) => {
   log.info(`addMember invoked for game: ${gameId}`);
+  console.log(memberToken);
 
   const data = createMemberData();
 

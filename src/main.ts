@@ -1,8 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
-
-// import * as ready from './events/ready';
-// import * as interactionCreate from './events/interaction-create';
+import * as eventHandlers from './event-handlers';
 import * as commands from './commands';
 import { webhookHandlers } from './webhooks';
 
@@ -10,7 +8,11 @@ const envConfig = dotenv.config();
 
 // Create a new client instance
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
+  ],
 });
 
 client.commands = new Collection();
@@ -23,12 +25,17 @@ client.commands.set(commands.listVariants.data.name, commands.listVariants);
   if (message.webhookId) {
     const webhook = await message.fetchWebhook();
     if (webhookHandlers.gameStarted.name === webhook.name)
-      webhookHandlers.gameStarted.execute(webhook);
+      webhookHandlers.gameStarted.execute(message, webhook);
   }
 });
 
 (client as Client<true>).on(Events.InteractionCreate, async (interaction) => {
-  // check if the interaction is a command
+  if (interaction.isButton()) {
+    if (interaction.customId === 'add-player') {
+      eventHandlers.addPlayer.execute(interaction);
+    }
+  }
+
   if (interaction.isCommand()) {
     const command = interaction.client.commands.get(interaction.commandName);
 

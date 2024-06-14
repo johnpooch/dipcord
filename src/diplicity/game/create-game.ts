@@ -43,13 +43,13 @@ const transformResponse: TransformResponse<TransformedResponse> = (
 };
 
 const createGameData = (
-  channelId: string,
+  guildId: string,
   variant: string,
   phaseLength: number,
   webhooks: CreateGameWehbooks,
 ) => ({
-  Id: channelId,
-  Desc: channelId,
+  Id: guildId,
+  Desc: guildId,
   Variant: variant,
   PhaseLengthMinutes: 60 * phaseLength,
   NonMovementPhaseLengthMinutes: 60 * phaseLength,
@@ -59,31 +59,37 @@ const createGameData = (
   MaxRating: 0,
   MinReliability: 0,
   MinQuickness: 0,
-  Private: true,
+  Private: false,
   NoMerge: false,
-  DisableConferenceChat: true,
-  DisableGroupChat: true,
-  DisablePrivateChat: true,
+  DisableConferenceChat: false,
+  DisableGroupChat: false,
+  DisablePrivateChat: false,
   NationAllocation: 0,
   Anonymous: false,
   LastYear: 0,
-  SkipMuster: false,
+  SkipMuster: true,
   ChatLanguageISO639_1: 'en',
   GameMasterEnabled: false,
-  GameStartedDiscordWebhookId: webhooks.gameStarted.id,
-  GameStartedDiscordWebhookToken: webhooks.gameStarted.token,
-  PhaseStartedDiscordWebhookId: webhooks.phaseStarted.id,
-  PhaseStartedDiscordWebhookToken: webhooks.phaseStarted.token,
+  DiscordWebhooks: {
+    GameStarted: {
+      Id: webhooks.gameStarted.id,
+      Token: webhooks.gameStarted.token,
+    },
+    PhaseStarted: {
+      Id: webhooks.phaseStarted.id,
+      Token: webhooks.phaseStarted.token,
+    },
+  },
 });
 
 const createGame = async (
-  channelId,
+  guildId,
   userToken,
   variant: string,
   phaseLength: number,
   webhooks: CreateGameWehbooks,
 ) => {
-  const data = createGameData(channelId, variant, phaseLength, webhooks);
+  const data = createGameData(guildId, variant, phaseLength, webhooks);
   const response = await fetch(`${baseUrl}/Game`, {
     method: 'POST',
     headers: { ...baseHeaders, Authorization: `Bearer ${userToken}` },
