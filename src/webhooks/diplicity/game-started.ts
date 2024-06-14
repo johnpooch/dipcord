@@ -58,18 +58,23 @@ export const execute = async (
     const userId = member.user.id;
     log.info(`Fetching member ${userId}`);
 
-    // const discordMember = discordMembers.get(userId);
-
-    // TODO assign roles
-
     const nation = member.nation;
     const nationLowercase = nation.toLowerCase();
     log.info(`Nation: ${nation}, lowercase: ${nationLowercase}`);
 
     const players = game.members
-      .map((member) => {
+      .map(async (member) => {
         const { nation } = member;
         const discordMember = discordMembers.get(member.user.id);
+
+        log.info(`Assigning role ${nation} to ${discordMember.displayName}`);
+        const role = message.guild.roles.cache.find(
+          (role) => role.name === nation,
+        );
+        log.info(`Found role: ${role}`);
+        await discordMember.roles.add(role);
+        log.info(`Role assigned`);
+
         return playerContent
           .replace('{{ nation }}', nation)
           .replace('{{ username }}', discordMember.displayName);
