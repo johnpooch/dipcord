@@ -12,6 +12,19 @@ type DiplicityResponse = ListApiResponse<{
   Desc: string;
   Variant: string;
   Members: DiplicityMember[];
+  NewestPhaseMeta: {
+    PhaseOrdinal: number;
+    Season: string;
+    Year: number;
+    Type: string;
+    Resolved: boolean;
+    CreatedAt: string;
+    CreatedAgo: number;
+    ResolvedAt: string;
+    ResolvedAgo: number;
+    DeadlineAt: string;
+    NextDeadlineIn: number;
+  }[];
 }>;
 
 type TransformedResponse = {
@@ -19,6 +32,12 @@ type TransformedResponse = {
   name: string;
   members: Member[];
   variant: string;
+  newestPhase: {
+    season: string;
+    year: number;
+    type: string;
+    deadline: string;
+  };
 }[];
 
 const transformResponse: TransformResponse<TransformedResponse> = (
@@ -26,16 +45,22 @@ const transformResponse: TransformResponse<TransformedResponse> = (
 ) => {
   log.info(`Transforming response: ${JSON.stringify(response)}`);
   const data = extractPropertiesList(response as DiplicityResponse);
-  const transformed = data.map(({ ID, Desc, Variant, Members }) => ({
-    id: ID,
-    name: Desc,
-    variant: Variant,
-    members: Members.map(({ User, Nation }) => ({
+  const transformed = data.map((game) => ({
+    id: game.ID,
+    name: game.Desc,
+    variant: game.Variant,
+    members: game.Members.map(({ User, Nation }) => ({
       nation: Nation,
       user: {
         id: User.Id,
       },
     })),
+    newestPhase: {
+      season: game.NewestPhaseMeta[0].Season,
+      year: game.NewestPhaseMeta[0].Year,
+      type: game.NewestPhaseMeta[0].Type,
+      deadline: game.NewestPhaseMeta[0].DeadlineAt,
+    },
   }));
   log.info(`Transformed response: ${JSON.stringify(transformed)}`);
   return transformed;

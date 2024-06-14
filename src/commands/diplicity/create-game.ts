@@ -1,16 +1,26 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 
 import * as api from '../../diplicity';
-import {
-  ButtonStyle,
-  ChannelType,
-  CommandInteraction,
-  ComponentType,
-  PermissionFlagsBits,
-} from 'discord.js';
 import { createScopedLogger } from '../../util/telemetry';
 import { createDiscordForm } from '../../util/form';
 import * as content from './content';
+import {
+  checkRequirements,
+  createCategory,
+  createChannel,
+  createPermissions,
+  createRole,
+  createWebhook,
+  deleteCategory,
+  deleteChannel,
+  deleteRole,
+  ensureStagingGameDoesNotExist,
+  ensureStartedGameDoesNotExist,
+  tryGetVariant,
+  withCommandHandler,
+  withUserAuthentication,
+} from '../../util/discord';
+import { ComponentType, ButtonStyle } from 'discord.js';
 
 const log = createScopedLogger('commands/game/create-game');
 
@@ -24,59 +34,21 @@ const defaultValues: FormData = {
   phaseLength: '24',
 };
 
+const requirements = [
+  ensureStagingGameDoesNotExist,
+  ensureStartedGameDoesNotExist,
+];
+
 const data = new SlashCommandBuilder()
   .setName('create-game')
   .setDescription('Creates a new game for the current server.');
 
-const execute = async (interaction: CommandInteraction): Promise<void> => {
-  const { user, guildId } = interaction;
+const execute = withCommandHandler(
+  withUserAuthentication(async (interaction, authentication) => {
+    const { guildId } = interaction;
+    checkRequirements(requirements, interaction, authentication);
 
-  log.info(
-    `Command invoked: ${interaction.commandName}; user: ${user.id}; guildId: ${guildId}`,
-  );
-
-  try {
-    const { token: botToken } = await api.login();
-    log.info('Bot token acquired');
-
-    const { token: userToken } = await api.getUserToken(user.id, botToken);
-    log.info('User token acquired');
-
-    const stagingGames = await api.listMyGames('Staging', userToken);
-    log.info('Staging games retrieved for user');
-
-    const stagingGameForServer = stagingGames.find(
-      (game) => game.name === guildId,
-    );
-
-    if (stagingGameForServer) {
-      log.info(
-        'There is already a staging game for this server. Responding to user.',
-      );
-      await interaction.reply(
-        'Cannot create a new game. There is already a staging game for this server.',
-      );
-      return;
-    }
-
-    const startedGames = await api.listMyGames('Started', userToken);
-    log.info('Started games retrieved for user.');
-
-    const startedGameForServer = startedGames.find(
-      (game) => game.name === guildId,
-    );
-
-    if (startedGameForServer) {
-      log.info(
-        'There is already an active game for this server. Responding to user.',
-      );
-      await interaction.reply(
-        'Cannot create a new game. There is already an active game for this server.',
-      );
-      return;
-    }
-
-    const variants = await api.listVariants(userToken);
+    const variants = await api.listVariants(authentication.userToken);
     log.info('Variants retrieved');
 
     const createGameForm = createDiscordForm<FormData>({
@@ -105,160 +77,61 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
         },
       ],
       onSubmit: async (interaction, values) => {
+        const permissions = createPermissions(interaction);
         await interaction.deferReply({ ephemeral: true });
 
-        const variant = variants.find((v) => v.name === values.variant);
-        if (!variant) {
-          await interaction.reply(
-            `Cannot create game with variant ${values.variant}. Variant not found.`,
-          );
-        }
+        const variant = await tryGetVariant(values.variant, authentication);
 
-        // Check if orders category exists - delete if it does
-        const existingOrdersCategories =
-          interaction.guild.channels.cache.filter(
-            (channel) =>
-              channel.name === 'Orders' &&
-              channel.type === ChannelType.GuildCategory,
-          );
+        await deleteCategory(interaction, 'Orders');
+        const category = await createCategory(interaction, 'Orders');
 
-        await Promise.all(
-          existingOrdersCategories.map(async (category) => {
-            interaction.guild.channels.cache
-              .filter((channel) => channel.parentId === category.id)
-              .forEach(async (channel) => {
-                log.info(`Deleting existing orders channel ${channel.name}`);
-                await channel.delete();
-                log.info(`Orders channel deleted ${channel.name}`);
-              });
+        await deleteChannel(interaction, 'updates');
+        // TODO only allow bot to send, edit and delete messages in updates channel
+        await createChannel(interaction, 'updates');
 
-            log.info('Deleting existing orders category');
-            await category.delete();
-            log.info('Orders category deleted');
-          }),
-        );
-
-        const orderCategory = await interaction.guild.channels.create({
-          name: 'Orders',
-          type: ChannelType.GuildCategory,
-        });
-        log.info('Orders category created');
-
-        log.info('Iterating over variant nations');
         variant.nations.forEach(async (nation) => {
-          // Check if any roles exist for the nation - delete if they do
-          const existingRoles = interaction.guild.roles.cache.filter(
-            (role) => role.name === nation,
-          );
+          await deleteRole(interaction, nation);
+          const role = await createRole(interaction, nation);
 
-          await Promise.all(
-            existingRoles.map(async (role) => {
-              log.info(`Deleting existing role for nation ${nation}`);
-              await role.delete();
-              log.info(`Role deleted for nation ${nation}`);
-            }),
-          );
+          const permission = permissions.RoleReadWrite(role);
+          const options = { permissions: permission, category };
+          const channelName = `${nation.toLowerCase()}-orders`;
 
-          const role = await interaction.guild.roles.create({
-            name: nation,
-          });
-          log.info(`Role created for nation ${nation}`);
-
-          await interaction.guild.channels.create({
-            name: `${nation.toLowerCase()}-orders`,
-            type: ChannelType.GuildText,
-            parent: orderCategory.id,
-            permissionOverwrites: [
-              {
-                id: interaction.guild.roles.everyone.id,
-                deny: PermissionFlagsBits.ViewChannel,
-              },
-              {
-                id: role.id,
-                allow: PermissionFlagsBits.ViewChannel,
-              },
-            ],
-          });
-          log.info(`Orders channel created for nation ${nation}`);
+          await createChannel(interaction, channelName, options);
         });
 
-        log.info('Deleting all existing webhooks channels for server');
-        const existingWebhooksChannels =
-          interaction.guild.channels.cache.filter(
-            (channel) => channel.name === 'webhooks',
-          );
+        await deleteChannel(interaction, 'webhooks');
+        const webhooksChannel = await createChannel(interaction, 'webhooks', {
+          permissions: permissions.Private,
+        });
 
-        await Promise.all(
-          existingWebhooksChannels.map(async (channel) => {
-            log.info('Deleting existing webhooks channel for server');
-            await channel.delete();
-            log.info('Webhooks channel deleted for server');
-          }),
+        const gameStartedWebhook = await createWebhook(
+          webhooksChannel,
+          'game-started',
         );
 
-        log.info('Creating private webhooks channel for server');
-        const webhooksChannel = await interaction.guild.channels.create({
-          name: 'webhooks',
-          type: ChannelType.GuildText,
-          permissionOverwrites: [
-            {
-              id: interaction.guild.roles.everyone.id,
-              deny: PermissionFlagsBits.ViewChannel,
-            },
-          ],
-        });
-        log.info('Private webhooks channel created for server');
-
-        // Ensure that there is no existing webhook for server with name "game-started"
-        log.info('Retrieving webhooks for server');
-        const existingWebhooks = await interaction.guild.fetchWebhooks();
-        log.info('Webhooks retrieved');
-
-        // Delete all existing webhooks
-        await Promise.all(
-          existingWebhooks.map(async (webhook) => {
-            log.info(`Deleting webhook ${webhook.name}`);
-            await webhook.delete();
-            log.info(`Webhook deleted ${webhook.name}`);
-          }),
+        const phaseStartedWebhook = await createWebhook(
+          webhooksChannel,
+          'phase-started',
         );
 
-        log.info('Creating game-started webhook for webhooks channel');
-        const gameStartedWebhook = await webhooksChannel.createWebhook({
-          name: 'game-started',
-        });
-        log.info('Game-started webhook created for webhooks channel');
-
-        log.info('Creating phase-started webhook for webhooks channel');
-        const phaseStartedWebhook = await webhooksChannel.createWebhook({
-          name: 'phase-started',
-        });
-        log.info('Phase-started webhook created for webhooks channel');
-
-        log.info('Creating game');
-        await api.createGame(
+        const game = await api.createGame(
           guildId,
-          userToken,
+          authentication.userToken,
           values.variant,
           Number(values.phaseLength),
           {
-            gameStarted: {
-              id: gameStartedWebhook.id,
-              token: gameStartedWebhook.token,
-            },
-            phaseStarted: {
-              id: phaseStartedWebhook.id,
-              token: phaseStartedWebhook.token,
-            },
+            gameStarted: gameStartedWebhook,
+            phaseStarted: phaseStartedWebhook,
           },
         );
-        log.info('Game created');
 
-        log.info('Responding to user with game created message');
+        const responseContent = content.createGameSuccessResponse
+          .replace('{{ variantName }}', game.variant)
+          .replace('{{ phaseLength }}', game.phaseLength.toString());
+
         await interaction.editReply({
-          content: content.createGameSuccessResponse
-            .replace('{{ variantName }}', values.variant)
-            .replace('{{ phaseLength }}', values.phaseLength),
+          content: responseContent,
           components: [
             {
               type: ComponentType.ActionRow,
@@ -276,13 +149,8 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
       },
     });
 
-    log.info('Responding to user with create game form');
     await createGameForm.respond(interaction, { ephemeral: true });
-  } catch (error) {
-    await interaction.reply(
-      `An error occurred while creating the game: ${error.message}`,
-    );
-  }
-};
+  }),
+);
 
 export { data, execute };

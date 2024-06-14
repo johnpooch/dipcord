@@ -26,6 +26,8 @@ client.commands.set(commands.listVariants.data.name, commands.listVariants);
     const webhook = await message.fetchWebhook();
     if (webhookHandlers.gameStarted.name === webhook.name)
       webhookHandlers.gameStarted.execute(message, webhook);
+    if (webhookHandlers.phaseStarted.name === webhook.name)
+      webhookHandlers.phaseStarted.execute(message, webhook);
   }
 });
 

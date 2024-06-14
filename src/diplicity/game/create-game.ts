@@ -10,6 +10,7 @@ type DiplicityResponse = {
     Desc: string;
     Variant: string;
     ID: string;
+    PhaseLengthMinutes: number;
   };
 };
 
@@ -17,6 +18,7 @@ type TransformedResponse = {
   id: string;
   name: string;
   variant: string;
+  phaseLength: number;
 };
 
 type CreateGameWehbooks = {
@@ -39,6 +41,7 @@ const transformResponse: TransformResponse<TransformedResponse> = (
     id: Properties.ID,
     variant: Properties.Variant,
     name: Properties.Desc,
+    phaseLength: Properties.PhaseLengthMinutes / 60,
   };
 };
 

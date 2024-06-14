@@ -63,23 +63,27 @@ export const execute = async (
     log.info(`Nation: ${nation}, lowercase: ${nationLowercase}`);
 
     const players = game.members
-      .map(async (member) => {
+      .map((member) => {
         const { nation } = member;
         const discordMember = discordMembers.get(member.user.id);
-
-        log.info(`Assigning role ${nation} to ${discordMember.displayName}`);
-        const role = message.guild.roles.cache.find(
-          (role) => role.name === nation,
-        );
-        log.info(`Found role: ${role}`);
-        await discordMember.roles.add(role);
-        log.info(`Role assigned`);
-
         return playerContent
           .replace('{{ nation }}', nation)
           .replace('{{ username }}', discordMember.displayName);
       })
       .join('\n');
+
+    game.members.forEach((member) => {
+      const { nation } = member;
+      const discordMember = discordMembers.get(member.user.id);
+
+      log.info(`Assigning role ${nation} to ${discordMember.displayName}`);
+      const role = message.guild.roles.cache.find(
+        (role) => role.name === nation,
+      );
+      log.info(`Found role: ${role}`);
+      discordMember.roles.add(role);
+      log.info(`Role assigned`);
+    });
 
     log.info(`Players text: ${players}`);
 
@@ -101,7 +105,7 @@ export const execute = async (
 
     if (!channel.isTextBased()) {
       log.error(`Channel ${nationLowercase}-orders is not a text channel`);
-      continue;
+      return;
     }
     await channel.send(messageContent);
   }
