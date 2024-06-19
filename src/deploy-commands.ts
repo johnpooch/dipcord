@@ -2,7 +2,7 @@ import { REST, Routes } from 'discord.js';
 import * as commands from './commands';
 import dotenv from 'dotenv';
 
-const APPLICATION_ID = '1246942452791644281';
+export const APPLICATION_ID = '1246942452791644281';
 
 const envConfig = dotenv.config();
 
