@@ -21,6 +21,7 @@ client.commands.set(commands.createGame.data.name, commands.createGame);
 client.commands.set(commands.addMember.data.name, commands.addMember);
 client.commands.set(commands.listVariants.data.name, commands.listVariants);
 client.commands.set(commands.getMap.data.name, commands.getMap);
+client.commands.set(commands.createOrder.data.name, commands.createOrder);
 
 (client as Client<true>).on(Events.MessageCreate, async (message) => {
   if (message.webhookId) {
