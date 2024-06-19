@@ -48,6 +48,37 @@ const execute = withCommandHandler(
       phaseId,
       authentication.userToken,
     );
+
+    const variants = await api.listVariants(authentication.userToken);
+    const variant = variants.find((v) => v.name === game.variant);
+
+    const phase = await api.getPhase(
+      game.id,
+      phaseId,
+      authentication.userToken,
+    );
+
+    console.log(phase);
+
+    const createProvinceLabel = (key: string, includeUnitType?: boolean) => {
+      if (includeUnitType) {
+        console.log(key);
+        console.log(phase.units);
+        if (phase.units[key]) {
+          return `${phase.units[key].type} ${variant.provinceLongNames[key]}${
+            variant.supplyCenters.has(key) ? ' ⭐' : ''
+          }`;
+        }
+        return `${variant.provinceLongNames[key]}${
+          variant.supplyCenters.has(key) ? ' ⭐' : ''
+        }`;
+      } else {
+        return `${variant.provinceLongNames[key]}${
+          variant.supplyCenters.has(key) ? ' ⭐' : ''
+        }`;
+      }
+    };
+
     log.info(
       `Options for game ${game.id} and phase ${phaseId}: ${JSON.stringify(options)}`,
     );
@@ -61,7 +92,7 @@ const execute = withCommandHandler(
           placeholder: 'Unit',
           options: () => {
             return Object.keys(options).map((key) => ({
-              label: key,
+              label: createProvinceLabel(key, true),
               value: key,
             }));
           },
@@ -94,7 +125,7 @@ const execute = withCommandHandler(
                 'Next'
               ],
             ).map((key) => ({
-              label: key,
+              label: createProvinceLabel(key),
               value: key,
             }));
           },
@@ -105,22 +136,38 @@ const execute = withCommandHandler(
           name: 'auxUnit',
           placeholder: (values) =>
             `Unit to be ${values.type === 'Convoy' ? 'convoyed' : 'supported'}`,
-          options: [
-            { label: 'Army Berlin', value: 'berlin' },
-            { label: 'Fleet Kiel', value: 'kiel' },
-            { label: 'Army Munich', value: 'munich' },
-          ],
+          options: (values) => {
+            if (!values.unit || !values.type) {
+              return [{ label: 'dummy', value: 'dummy' }];
+            }
+            return Object.keys(
+              options[values.unit]['Next'][values.type]['Next'][values.unit][
+                'Next'
+              ],
+            ).map((key) => ({
+              label: createProvinceLabel(key, true),
+              value: key,
+            }));
+          },
           hidden: (values) => !['Convoy', 'Support'].includes(values.type),
         },
         {
           type: 'string-select',
           name: 'auxDestination',
           placeholder: 'Destination',
-          options: [
-            { label: 'Berlin', value: 'berlin' },
-            { label: 'Kiel', value: 'kiel' },
-            { label: 'Munich', value: 'munich' },
-          ],
+          options: (values) => {
+            if (!values.unit || !values.type || !values.auxUnit) {
+              return [{ label: 'dummy', value: 'dummy' }];
+            }
+            return Object.keys(
+              options[values.unit]['Next'][values.type]['Next'][values.unit][
+                'Next'
+              ][values.auxUnit]['Next'],
+            ).map((key) => ({
+              label: createProvinceLabel(key),
+              value: key,
+            }));
+          },
           hidden: (values) => !['Convoy', 'Support'].includes(values.type),
           disabled: (values) => !values.auxUnit,
         },

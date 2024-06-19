@@ -56,13 +56,14 @@ const transformResponse: TransformResponse<TransformedResponse> = (
         id: User.Id,
       },
     })),
-    newestPhase: {
-      id: game.NewestPhaseMeta[0].PhaseOrdinal.toString(),
-      season: game.NewestPhaseMeta[0].Season,
-      year: game.NewestPhaseMeta[0].Year,
-      type: game.NewestPhaseMeta[0].Type,
-      deadline: game.NewestPhaseMeta[0].DeadlineAt,
-    },
+    newestPhase: game.NewestPhaseMeta &&
+      game.NewestPhaseMeta.length > 0 && {
+        id: game.NewestPhaseMeta[0].PhaseOrdinal.toString(),
+        season: game.NewestPhaseMeta[0].Season,
+        year: game.NewestPhaseMeta[0].Year,
+        type: game.NewestPhaseMeta[0].Type,
+        deadline: game.NewestPhaseMeta[0].DeadlineAt,
+      },
   }));
   log.info(`Transformed response: ${JSON.stringify(transformed)}`);
   return transformed;

@@ -100,26 +100,6 @@ export const execute = async (
         );
         log.info('Player token retrieved');
 
-        const guildGames = games.filter((game) => game.name === guildId);
-
-        if (guildGames.length === 0) {
-          log.info('No pending game for this guild. Responding to user.');
-          await interaction.reply('There is no pending game for this server.');
-          return;
-        }
-
-        if (guildGames.length > 1) {
-          log.info(
-            'Multiple pending games for this guild. Responding to user.',
-          );
-          await interaction.reply(
-            'There should only be max one pending game for this server.',
-          );
-          return;
-        }
-
-        const game = guildGames[0];
-
         if (game.members.some((m) => m.user.id === playerId)) {
           log.info('Member already in game. Responding to user.');
           await interaction.reply('User is already a member of the game');

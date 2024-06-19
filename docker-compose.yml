@@ -32,19 +32,6 @@ services:
       - diplicity-net
     env_file:
       - .env
-  dipcord-build-watch:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dipcord-build-watch
-    entrypoint: ['npm', 'run', 'build:watch']
-    volumes:
-      - /app/node_modules
-      - .:/app
-    networks:
-      - diplicity-net
-    env_file:
-      - .env
 networks:
   diplicity-net:
     name: diplicity-net
