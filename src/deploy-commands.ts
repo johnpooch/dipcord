@@ -19,6 +19,7 @@ const rest = new REST().setToken(envConfig.parsed.DISCORD_BOT_TOKEN);
     commandsData.push(commands.addMember.data.toJSON());
     commandsData.push(commands.listVariants.data.toJSON());
     commandsData.push(commands.getMap.data.toJSON());
+    commandsData.push(commands.createOrder.data.toJSON());
 
     // The put method is used to fully refresh all commands in the guild with the current set
     await rest.put(Routes.applicationCommands(APPLICATION_ID), {
