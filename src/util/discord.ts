@@ -264,6 +264,33 @@ const ensureStartedGameDoesNotExist: RequirementFunc = async (
   }
 };
 
+const getGameForServer = async (
+  interaction: CommandInteraction,
+  authentication: UserAuthentication,
+) => {
+  const stagingGames = await api.listMyGames(
+    'Staging',
+    authentication.userToken,
+  );
+  log.info('Staging games retrieved for user.');
+  const activeGames = await api.listMyGames(
+    'Started',
+    authentication.userToken,
+  );
+  log.info('Active games retrieved for user.');
+
+  const game = [...stagingGames, ...activeGames].find(
+    (game) => game.name === interaction.guildId,
+  );
+
+  if (!game) {
+    log.info('There is no staging or active game for this server.');
+    throw new Error('There is no staging game for this server.');
+  }
+
+  return game;
+};
+
 const createPermissions = (interaction: Interaction) =>
   ({
     RoleReadWrite: (role: Role): OverwriteResolvable[] => [
@@ -308,6 +335,7 @@ export {
   deleteCategory,
   deleteChannel,
   deleteRole,
+  getGameForServer,
   ensureStartedGameDoesNotExist,
   ensureStagingGameDoesNotExist,
   tryGetVariant,
