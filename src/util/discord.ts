@@ -200,7 +200,8 @@ const withUserAuthentication =
       const userToken = await tryGetUserToken(user.id, botToken);
       await fn(interaction, { userToken });
     } catch (error) {
-      await interaction.reply(`An error occurred `);
+      log.error(`An error occurred: ${error.message}`);
+      await interaction.reply(`An error occurred: ${error.message}`);
     }
   };
 

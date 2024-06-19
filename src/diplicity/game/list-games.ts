@@ -33,6 +33,7 @@ type TransformedResponse = {
   members: Member[];
   variant: string;
   newestPhase: {
+    id: string;
     season: string;
     year: number;
     type: string;
@@ -56,6 +57,7 @@ const transformResponse: TransformResponse<TransformedResponse> = (
       },
     })),
     newestPhase: {
+      id: game.NewestPhaseMeta[0].PhaseOrdinal.toString(),
       season: game.NewestPhaseMeta[0].Season,
       year: game.NewestPhaseMeta[0].Year,
       type: game.NewestPhaseMeta[0].Type,
