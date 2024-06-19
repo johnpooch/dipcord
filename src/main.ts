@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import * as eventHandlers from './event-handlers';
 import * as commands from './commands';
 import { webhookHandlers } from './webhooks';
+import { APPLICATION_ID } from './deploy-commands';
 
 const envConfig = dotenv.config();
 
@@ -24,7 +25,7 @@ client.commands.set(commands.getMap.data.name, commands.getMap);
 client.commands.set(commands.createOrder.data.name, commands.createOrder);
 
 (client as Client<true>).on(Events.MessageCreate, async (message) => {
-  if (message.webhookId) {
+  if (message.webhookId && message.author.id !== APPLICATION_ID) {
     const webhook = await message.fetchWebhook();
     if (webhookHandlers.gameStarted.name === webhook.name)
       webhookHandlers.gameStarted.execute(message, webhook);
