@@ -1,0 +1,30 @@
+name: Build and deploy Discord commands
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Docker image
+        run: docker build -t dipcord-deploy-commands .
+
+      - name: Run Docker container
+        run: docker run -e DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN dipcord-deploy-commands npm run deploy-commands
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
