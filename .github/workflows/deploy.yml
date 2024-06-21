@@ -1,5 +1,5 @@
 on: [push]
-name: Linux_Container_Workflow
+name: "Build and Deploy to Azure Container Instances"
 
 jobs:
     build-and-deploy:
