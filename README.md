@@ -5,6 +5,7 @@
 Dipcord is a NodeJS server that runs a Discord bot which integrates with the
 Diplicity API.
 
+
 ## Getting Started
 
 - Clone the repo
