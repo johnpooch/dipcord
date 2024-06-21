@@ -35,6 +35,12 @@ const orderReadyToSubmit = (values: Partial<FormData>) => {
   return true;
 };
 
+const createOrderContent = `
+## Create Order
+
+You have {{ orderCount }} orders to give.
+`;
+
 const data = new SlashCommandBuilder()
   .setName('create-order')
   .setDescription('Creates a new order for the current phase.');
@@ -58,8 +64,6 @@ const execute = withCommandHandler(
       authentication.userToken,
     );
 
-    console.log(phase);
-
     const createProvinceLabel = (key: string, includeUnitType?: boolean) => {
       if (includeUnitType) {
         console.log(key);
@@ -82,8 +86,11 @@ const execute = withCommandHandler(
     log.info(
       `Options for game ${game.id} and phase ${phaseId}: ${JSON.stringify(options)}`,
     );
+
+    // TODO add call to corroborate to get remaining order count, order type, number of given orders
+
     const form = createDiscordForm<FormData>({
-      interactionContent: 'Please provide the details for the order',
+      interactionContent: createOrderContent.replace('{{ orderCount }}', '3'),
       submitLabel: 'Create order',
       fields: [
         {
