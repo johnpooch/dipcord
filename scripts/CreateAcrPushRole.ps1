@@ -1,6 +1,7 @@
 param(
     [string]$registryId,
-    [string]$clientId
+    [string]$clientId,
+    [string]$subscriptionId
 )
 
-az role assignment create --assignee $clientId --scope $registryId --role AcrPush
+az role assignment create --assignee $clientId --scope $registryId --subscription $subscriptionId --role AcrPush
