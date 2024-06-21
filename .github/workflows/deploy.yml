@@ -17,21 +17,21 @@ jobs:
         - name: 'Build and push image'
           uses: azure/docker-login@v1
           with:
-            login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
-            username: ${{ env.REGISTRY_USERNAME }}
+            login-server: ${{ vars.REGISTRY_LOGIN_SERVER }}
+            username: ${{ vars.REGISTRY_USERNAME }}
             password: ${{ secrets.REGISTRY_PASSWORD }}
         - run: |
-            docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
-            docker push ${{ env.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
+            docker build . -t ${{ vars.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
+            docker push ${{ vars.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
 
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
           with:
-            resource-group: ${{ env.RESOURCE_GROUP }}
-            dns-name-label: ${{ env.RESOURCE_GROUP }}${{ github.run_number }}
-            image: ${{ env.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
-            registry-login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
-            registry-username: ${{ env.REGISTRY_USERNAME }}
+            resource-group: ${{ vars.RESOURCE_GROUP }}
+            dns-name-label: ${{ vars.RESOURCE_GROUP }}${{ github.run_number }}
+            image: ${{ vars.REGISTRY_LOGIN_SERVER }}/webimage:${{ github.sha }}
+            registry-login-server: ${{ vars.REGISTRY_LOGIN_SERVER }}
+            registry-username: ${{ vars.REGISTRY_USERNAME }}
             registry-password: ${{ secrets.REGISTRY_PASSWORD }}
             name: dipcord
             location: 'west europe'
