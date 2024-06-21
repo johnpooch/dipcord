@@ -10,18 +10,6 @@ type TransformedResponse = {
   token: string;
 };
 
-const USERNAME = process.env.DISCORD_BOT_USERNAME;
-if (!USERNAME || USERNAME === '') {
-  throw new Error('DISCORD_BOT_USERNAME environment variable is required');
-}
-
-const PASSWORD = process.env.DISCORD_BOT_PASSWORD;
-if (!PASSWORD || PASSWORD === '') {
-  throw new Error('DISCORD_BOT_PASSWORD environment variable is required');
-}
-
-const token = Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
-
 const transformResponse: TransformResponse<TransformedResponse> = (
   response,
 ) => {
@@ -30,6 +18,19 @@ const transformResponse: TransformResponse<TransformedResponse> = (
 };
 
 const login = async () => {
+
+  const USERNAME = process.env.DISCORD_BOT_USERNAME;
+  if (!USERNAME || USERNAME === '') {
+    throw new Error('DISCORD_BOT_USERNAME environment variable is required');
+  }
+
+  const PASSWORD = process.env.DISCORD_BOT_PASSWORD;
+  if (!PASSWORD || PASSWORD === '') {
+    throw new Error('DISCORD_BOT_PASSWORD environment variable is required');
+  }
+
+  const token = Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
+
   const response = await fetch(`${baseUrl}/Auth/DiscordBotLogin`, {
     method: 'GET',
     headers: { ...baseHeaders, Authorization: `Basic ${token}` },
