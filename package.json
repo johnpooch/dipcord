@@ -22,7 +22,6 @@
   },
   "scripts": {
     "start": "node build/src/main.js",
-    "preinstall": "npm i nodemon -g",
     "start-dev": "nodemon --legacy-watch -e ts --exec \"tsc -p ./tsconfig.json && node build/src/main.js\"",
     "deploy-commands-and-start": "npm run deploy-commands && npm run start",
     "deploy-commands": "node build/src/deploy-commands.js",

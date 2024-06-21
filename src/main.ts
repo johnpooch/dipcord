@@ -1,11 +1,8 @@
 import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
-import dotenv from 'dotenv';
 import * as eventHandlers from './event-handlers';
 import * as commands from './commands';
 import { webhookHandlers } from './webhooks';
 import { APPLICATION_ID } from './deploy-commands';
-
-const envConfig = dotenv.config();
 
 // Create a new client instance
 const client = new Client({
@@ -80,7 +77,7 @@ client.once(Events.ClientReady, (readyClient) => {
 // client.on(interactionCreate.name, interactionCreate.execute);
 
 // Log in to Discord with your client's token
-client.login(envConfig.parsed.DISCORD_BOT_TOKEN);
+client.login(process.env.DISCORD_BOT_TOKEN);
 
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received.');

@@ -1,13 +1,10 @@
 import { REST, Routes } from 'discord.js';
 import * as commands from './commands';
-import dotenv from 'dotenv';
 
 export const APPLICATION_ID = '1246942452791644281';
 
-const envConfig = dotenv.config();
-
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(envConfig.parsed.DISCORD_BOT_TOKEN);
+const rest = new REST().setToken(process.env.DISCORD_BOT_TOKEN);
 
 // and deploy your commands!
 (async (): Promise<void> => {
