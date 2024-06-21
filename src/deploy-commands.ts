@@ -1,8 +1,6 @@
 import { REST, Routes } from 'discord.js';
 import * as commands from './commands';
 
-export const APPLICATION_ID = '1246942452791644281';
-
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(process.env.DISCORD_BOT_TOKEN);
 
@@ -19,7 +17,7 @@ const rest = new REST().setToken(process.env.DISCORD_BOT_TOKEN);
     commandsData.push(commands.createOrder.data.toJSON());
 
     // The put method is used to fully refresh all commands in the guild with the current set
-    await rest.put(Routes.applicationCommands(APPLICATION_ID), {
+    await rest.put(Routes.applicationCommands(process.env.DISCORD_APPLICATION_ID), {
       body: commandsData,
     });
   } catch (error) {

@@ -25,6 +25,7 @@ jobs:
         run: docker build -t dipcord-deploy-commands .
 
       - name: Run Docker container
-        run: docker run -e DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN dipcord-deploy-commands npm run deploy-commands
+        run: docker run -e DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN -e DISCORD_APPLICATION_ID=$DISCORD_APPLICATION_ID dipcord-deploy-commands npm run deploy-commands
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}

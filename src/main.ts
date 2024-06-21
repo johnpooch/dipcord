@@ -2,7 +2,6 @@ import { Client, Collection, Events, GatewayIntentBits } from 'discord.js';
 import * as eventHandlers from './event-handlers';
 import * as commands from './commands';
 import { webhookHandlers } from './webhooks';
-import { APPLICATION_ID } from './deploy-commands';
 
 // Create a new client instance
 const client = new Client({
@@ -22,7 +21,7 @@ client.commands.set(commands.getMap.data.name, commands.getMap);
 client.commands.set(commands.createOrder.data.name, commands.createOrder);
 
 (client as Client<true>).on(Events.MessageCreate, async (message) => {
-  if (message.webhookId && message.author.id !== APPLICATION_ID) {
+  if (message.webhookId && message.author.id !== process.env.DISCORD_APPLICATION_ID) {
     const webhook = await message.fetchWebhook();
     if (webhookHandlers.gameStarted.name === webhook.name)
       webhookHandlers.gameStarted.execute(message, webhook);
